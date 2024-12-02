@@ -51,14 +51,14 @@ async function main() {
     console.log(productNames);
     await sleep(1);
 
-    const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
+    // const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
         headless: process.env.SHOW_BROWSER === "1" ? false : true,
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
         userDataDir: "./tmp",
-        executablePath,
+        // executablePath,
     });
     const page = await browser.newPage();
 
@@ -91,18 +91,21 @@ async function main() {
 
         const isList = await page.evaluate((p) => {
             const list = document.querySelectorAll("#app>.body__wrapper>.body__content>div>.CardsListSortPager>.CardsGrid>div");
-            if (!list && !list?.length) return false;
+            if (!list || !list?.length) return false;
             for (el of list) {
-                if (el?.querySelector("div>span")?.textContent === p) {
+                if (el?.querySelector("div>span")?.textContent?.toLowerCase() === p?.toLowerCase()) {
                     el?.querySelector("div>a")?.click();
-                    break;
+                    return true;
                 }
             }
+            list[0]?.querySelector("div>a")?.click();
             return true;
         }, p);
 
+        console.log({ isList });
+
         if (isList) {
-            await sleep(2);
+            await sleep(6);
         }
 
 
@@ -111,7 +114,6 @@ async function main() {
             const charList = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li");
             const charList2 = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div:nth-child(2)>div>div>div");
             const c = {};
-            console.log(charList);
 
             charList?.forEach((item, i) => {
                 const key = item.querySelector(`dl>dt`)?.textContent;
@@ -136,6 +138,12 @@ async function main() {
     }
 
     const valuesToAppend = [];
+
+    await googleSheets.spreadsheets.values.clear({
+        auth,
+        spreadsheetId,
+        range: "Лист1",
+    });
 
     const headers = ["Название товара"];
     const firstProduct = productNames[0];
