@@ -53,7 +53,7 @@ async function main() {
 
     const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: process.env.SHOW_BROWSER === "1" ? false : true,
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
@@ -65,7 +65,6 @@ async function main() {
     await page.goto(process.env.TARGET_URL, { waitUntil: "domcontentloaded", timeout: 61000 });
     await page.setViewport({ width: 1820, height: 1080 });
 
-    await sleep(15);
 
     const searchFormSelector = "#app>.body__header>header>div>div:nth-child(3)>div>form";
     const searchInputSelector = searchFormSelector + ">div>div:nth-child(2)>input:nth-child(2)";
@@ -73,6 +72,8 @@ async function main() {
 
     const searchInput = await page.$(searchInputSelector);
     const searchButton = await page.$(searchButtonSelector);
+
+    await sleep(6);
 
     if (!searchInput || !searchButton) {
         throw new Error("Search Input or Search Button is not defined");
@@ -83,22 +84,27 @@ async function main() {
 
     for (let p of productNames) {
         await page.evaluate(input => input.value = "", searchInput);
-        await searchInput.type(p || "Oooops...");
+        await searchInput.type(p || "Oooops...").catch(err => console.error(err.message));
         await searchButton.click().catch(err => console.error(err.message));
         await sleep(4);
-        await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(err => console.error(err.message));
+        // await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(err => console.error(err.message));
 
-        const isList = await page.evaluate(() => {
+        const isList = await page.evaluate((p) => {
             const list = document.querySelectorAll("#app>.body__wrapper>.body__content>div>.CardsListSortPager>.CardsGrid>div");
             if (!list && !list?.length) return false;
-            list[0].querySelector("div").click();
+            for (el of list) {
+                if (el?.querySelector("div>span")?.textContent === p) {
+                    el?.querySelector("div>a")?.click();
+                    break;
+                }
+            }
             return true;
-        });
+        }, p);
 
         if (isList) {
             await sleep(2);
-            await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(err => console.error(err.message));
         }
+
 
         const productCharacteristics = await page.evaluate(() => {
             const mainInfo = document.querySelector("#app>.body__wrapper>.body__content>div>section");
