@@ -35,18 +35,7 @@ async function main() {
         return acc;
     }, []);
 
-    // await googleSheets.spreadsheets.values.append({
-    //     auth,
-    //     spreadsheetId,
-    //     range: "Лист1",
-    //     valueInputOption: "USER_ENTERED",
-    //     resource: {
-    //         values: [
-    //             ["Salut", "Peter"],
-    //             ["Salut", "Evgen"]
-    //         ],
-    //     },
-    // });
+    if (productNames?.length < 1) return console.log("Заполните колонку А названиями товаров");
 
     console.log(productNames);
     await sleep(1);
@@ -86,33 +75,36 @@ async function main() {
         await page.evaluate(input => input.value = "", searchInput);
         await searchInput.type(p || "Oooops...").catch(err => console.error(err.message));
         await searchButton.click().catch(err => console.error(err.message));
-        await sleep(4);
+        await sleep(3.2);
         // await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(err => console.error(err.message));
 
-        const isList = await page.evaluate((p) => {
+        const status = await page.evaluate((p) => {
+            const notfound = !!document.querySelector("#app > div.body__wrapper > div.body__content > div > div.CardsListSortPager > div.CardListEmpty > h2")?.textContent.includes("ничего не найдено");
             const list = document.querySelectorAll("#app>.body__wrapper>.body__content>div>.CardsListSortPager>.CardsGrid>div");
-            if (!list || !list?.length) return false;
+            if (!list || !list?.length) return { isList: false, notfound };
+            if (notfound) return { isList: false, notfound };
             for (el of list) {
                 if (el?.querySelector("div>span")?.textContent?.toLowerCase() === p?.toLowerCase()) {
                     el?.querySelector("div>a")?.click();
-                    return true;
+                    return { isList: true, notfound };
                 }
             }
             list[0]?.querySelector("div>a")?.click();
-            return true;
+            return { isList: true, notfound };
         }, p);
 
-        console.log({ isList });
+        // console.log({ isList });
 
-        if (isList) {
+        if (status?.notfound) continue;
+
+        if (status?.isList) {
             await sleep(6);
         }
-
 
         const productCharacteristics = await page.evaluate(() => {
             const mainInfo = document.querySelector("#app>.body__wrapper>.body__content>div>section");
             const charList = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li");
-            const charList2 = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div:nth-child(2)>div>div>div");
+            const charList2 = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>div:nth-child(2)>div>div");
             const c = {};
 
             charList?.forEach((item, i) => {
