@@ -119,7 +119,14 @@ async function main() {
                 c[key] = value;
             });
 
-            c["Фото"] = mainInfo.querySelector("div>div>div>picture>img")?.getAttribute("src");
+            const photos = [];
+            photos.push(mainInfo.querySelector("div>div>div>picture>img")?.getAttribute("src"));
+
+            const photosList = document.querySelectorAll("#app > div.body__wrapper > div.body__content > div > section > div.ViewProductPage__photos > div.ProductPhotos > div.ProductPhotos-buttons > ul > li");
+
+            photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img").getAttribute("src")));
+
+            c["Фото"] = photos?.join(", ");
             c["Цена"] = mainInfo.querySelector("div:last-child>div>div>.ProductOffer__price>span").textContent;
 
             return c;
