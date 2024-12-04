@@ -62,7 +62,7 @@ async function main() {
     const searchInput = await page.$(searchInputSelector);
     const searchButton = await page.$(searchButtonSelector);
 
-    await sleep(6);
+    await sleep(4);
 
     if (!searchInput || !searchButton) {
         throw new Error("Search Input or Search Button is not defined");
@@ -127,7 +127,7 @@ async function main() {
             photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img").getAttribute("src")));
 
             c["Фото"] = photos?.join(", ");
-            c["Цена"] = mainInfo.querySelector("div:last-child>div>div>.ProductOffer__price>span").textContent;
+            c["Цена"] = mainInfo.querySelector("div:last-child>div>div>.ProductOffer__price>span")?.textContent;
 
             return c;
         });
