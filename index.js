@@ -23,7 +23,6 @@ async function main() {
         spreadsheetId,
     });
 
-    // read rows
     const { data } = await googleSheets.spreadsheets.values.get({
         auth,
         spreadsheetId,
@@ -98,41 +97,45 @@ async function main() {
         if (status?.notfound) continue;
 
         if (status?.isList) {
-            await sleep(6);
+            await sleep(3);
         }
 
         const productCharacteristics = await page.evaluate(() => {
-            const mainInfo = document.querySelector("#app>.body__wrapper>.body__content>div>section");
-            const charList = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li");
-            const charList2 = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>div:nth-child(2)>div>div");
+            const mainInfo = document?.querySelector("#app>.body__wrapper>.body__content>div>section");
+            const charList = document?.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li");
+            const charList2 = document?.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>div:nth-child(2)>div>div");
             const c = {};
 
             charList?.forEach((item, i) => {
-                const key = item.querySelector(`dl>dt`)?.textContent;
-                const value = item.querySelector(`dl>dd>p`)?.textContent;
+                const key = item?.querySelector(`dl>dt`)?.textContent;
+                const value = item?.querySelector(`dl>dd>p`)?.textContent;
                 c[key] = value;
             });
 
             charList2?.forEach((item, i) => {
-                const key = item.querySelector(`h3`)?.textContent;
-                const value = item.querySelector(`div>.readMore__text>dl>div>dd`)?.textContent;
+                const key = item?.querySelector(`h3`)?.textContent;
+                const value = item?.querySelector(`div>.readMore__text>dl>div>dd`)?.textContent;
                 c[key] = value;
             });
 
             const photos = [];
-            photos.push(mainInfo.querySelector("div>div>div>picture>img")?.getAttribute("src"));
+            photos.push(mainInfo?.querySelector("div>div>div>picture>img")?.getAttribute("src"));
 
-            const photosList = document.querySelectorAll("#app > div.body__wrapper > div.body__content > div > section > div.ViewProductPage__photos > div.ProductPhotos > div.ProductPhotos-buttons > ul > li");
+            const photosList = document?.querySelectorAll("#app > div.body__wrapper > div.body__content > div > section > div.ViewProductPage__photos > div.ProductPhotos > div.ProductPhotos-buttons > ul > li");
 
             photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img").getAttribute("src")));
 
             c["Фото"] = photos?.join(", ");
-            c["Цена"] = mainInfo.querySelector("div:last-child>div>div>.ProductOffer__price>span")?.textContent;
+            c["Цена"] = mainInfo?.querySelector("div:last-child>div>div>.ProductOffer__price>span")?.textContent;
+            c["Наименование"] = document?.querySelector("#app > div.body__wrapper > div.body__content > div > h1")?.textContent;
 
             return c;
         });
 
-        characteristics[p] = productCharacteristics;
+        characteristics[p] = {
+            ...characteristics[p],
+            ...productCharacteristics,
+        };
         console.log(characteristics);
     }
 
