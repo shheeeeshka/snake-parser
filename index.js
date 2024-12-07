@@ -88,8 +88,8 @@ async function main() {
                     return { isList: true, notfound };
                 }
             }
-            list[0]?.querySelector("div>a")?.click();
-            return { isList: true, notfound };
+            // list[0]?.querySelector("div>a")?.click();
+            return { isList: true, notfound: true };
         }, p);
 
         // console.log({ isList });
@@ -97,7 +97,7 @@ async function main() {
         if (status?.notfound) continue;
 
         if (status?.isList) {
-            await sleep(3);
+            await sleep(2.3);
         }
 
         const productCharacteristics = await page.evaluate(() => {
@@ -123,9 +123,9 @@ async function main() {
 
             const photosList = document?.querySelectorAll("#app > div.body__wrapper > div.body__content > div > section > div.ViewProductPage__photos > div.ProductPhotos > div.ProductPhotos-buttons > ul > li");
 
-            photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img").getAttribute("src")));
+            photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img")?.getAttribute("src")));
 
-            c["Фото"] = photos?.join(", ");
+            c["Фото"] = photos?.join("; ");
             c["Цена"] = mainInfo?.querySelector("div:last-child>div>div>.ProductOffer__price>span")?.textContent;
             c["Наименование"] = document?.querySelector("#app > div.body__wrapper > div.body__content > div > h1")?.textContent;
 
