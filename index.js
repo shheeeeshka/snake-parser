@@ -26,11 +26,13 @@ async function main() {
     const { data } = await googleSheets.spreadsheets.values.get({
         auth,
         spreadsheetId,
-        range: "Лист1!A2:A",
+        range: "Лист1!A2:D",
     });
 
-    const productNames = data.values?.reduce((acc, el) => {
-        acc.push(...el);
+    const productNames = data.values?.reduce((acc, arr) => {
+        if (arr.length === 1) {
+            acc.push(arr[0]);
+        }
         return acc;
     }, []);
 
@@ -141,11 +143,11 @@ async function main() {
 
     const valuesToAppend = [];
 
-    await googleSheets.spreadsheets.values.clear({
-        auth,
-        spreadsheetId,
-        range: "Лист1",
-    });
+    // await googleSheets.spreadsheets.values.clear({
+    //     auth,
+    //     spreadsheetId,
+    //     range: "Лист1",
+    // });
 
     const headers = ["Название товара"];
     const firstProduct = productNames[0];
