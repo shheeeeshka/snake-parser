@@ -26,13 +26,11 @@ async function main() {
     const { data } = await googleSheets.spreadsheets.values.get({
         auth,
         spreadsheetId,
-        range: "Лист1!A2:D",
+        range: "Лист1!A2:A",
     });
 
-    const productNames = data.values?.reduce((acc, arr) => {
-        if (arr.length === 1) {
-            acc.push(arr[0]);
-        }
+    const productNames = data.values?.reduce((acc, el) => {
+        acc.push(...el);
         return acc;
     }, []);
 
@@ -41,14 +39,14 @@ async function main() {
     console.log(productNames);
     await sleep(1);
 
-    // const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
+    const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
         headless: process.env.SHOW_BROWSER === "1" ? false : true,
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
         userDataDir: "./tmp",
-        // executablePath,
+        executablePath,
     });
     const page = await browser.newPage();
 
@@ -143,11 +141,11 @@ async function main() {
 
     const valuesToAppend = [];
 
-    // await googleSheets.spreadsheets.values.clear({
-    //     auth,
-    //     spreadsheetId,
-    //     range: "Лист1",
-    // });
+    await googleSheets.spreadsheets.values.clear({
+        auth,
+        spreadsheetId,
+        range: "Лист1",
+    });
 
     const headers = ["Название товара"];
     const firstProduct = productNames[0];
