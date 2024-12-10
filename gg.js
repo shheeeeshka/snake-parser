@@ -50,8 +50,9 @@ async function main() {
     });
     const page = await browser.newPage();
 
-    await page.goto(process.env.TARGET_URL, { waitUntil: "networkidle0", timeout: 61000 });
+    await page.goto(process.env.TARGET_URL, { waitUntil: "domcontentloaded", timeout: 61000 });
     await page.setViewport({ width: 1820, height: 1080 });
+
 
     const searchFormSelector = "#app>.body__header>header>div>div:nth-child(3)>div>form";
     const searchInputSelector = searchFormSelector + ">div>div:nth-child(2)>input:nth-child(2)";
@@ -68,8 +69,6 @@ async function main() {
 
     const characteristics = {};
     // const characteristicsListSelector = "#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li:nth-child(3)>dl>dd>p";
-
-    await searchInput.click().catch(err => console.error(err.messaage));
 
     for (let p of productNames) {
         await page.evaluate(input => input.value = "", searchInput);
@@ -88,9 +87,9 @@ async function main() {
                     el?.querySelector("div>a")?.click();
                     return { isList: true, notfound };
                 }
-                if (el === list[list.length - 1]) return { isList: true, notfound: true };
             }
-            return { isList: true, notfound };
+            // list[0]?.querySelector("div>a")?.click();
+            return { isList: true, notfound: true };
         }, p);
 
         // console.log({ isList });
@@ -98,7 +97,7 @@ async function main() {
         if (status?.notfound) continue;
 
         if (status?.isList) {
-            await sleep(3);
+            await sleep(2.3);
         }
 
         const productCharacteristics = await page.evaluate(() => {
@@ -152,7 +151,6 @@ async function main() {
     const firstProduct = productNames[0];
     if (firstProduct) {
         const productProps = characteristics[firstProduct] || {};
-        console.log(productProps);
         Object.keys(productProps).forEach(key => {
             if (!headers.includes(key)) {
                 headers.push(key);
@@ -171,8 +169,6 @@ async function main() {
 
         valuesToAppend.push(row);
     }
-
-    console.log("Val : ", valuesToAppend);
 
     googleSheets.spreadsheets.values.append({
         auth,
