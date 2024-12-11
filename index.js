@@ -23,6 +23,7 @@ async function main() {
         spreadsheetId,
     });
 
+    // read rows
     const { data } = await googleSheets.spreadsheets.values.get({
         auth,
         spreadsheetId,
@@ -39,19 +40,20 @@ async function main() {
     console.log(productNames);
     await sleep(1);
 
-    const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
+    // const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
         headless: process.env.SHOW_BROWSER === "1" ? false : true,
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
         userDataDir: "./tmp",
-        executablePath,
+        // executablePath,
     });
     const page = await browser.newPage();
 
     await page.goto(process.env.TARGET_URL, { waitUntil: "networkidle0", timeout: 61000 });
-    await page.setViewport({ width: 1820, height: 1080 });
+    await page.setViewport({ width: 1520, height: 1080 });
+
 
     const searchFormSelector = "#app>.body__header>header>div>div:nth-child(3)>div>form";
     const searchInputSelector = searchFormSelector + ">div>div:nth-child(2)>input:nth-child(2)";
@@ -60,7 +62,7 @@ async function main() {
     const searchInput = await page.$(searchInputSelector);
     const searchButton = await page.$(searchButtonSelector);
 
-    await sleep(4);
+    await sleep(6);
 
     if (!searchInput || !searchButton) {
         throw new Error("Search Input or Search Button is not defined");
@@ -68,8 +70,6 @@ async function main() {
 
     const characteristics = {};
     // const characteristicsListSelector = "#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li:nth-child(3)>dl>dd>p";
-
-    await searchInput.click().catch(err => console.error(err.messaage));
 
     for (let p of productNames) {
         await page.evaluate(input => input.value = "", searchInput);
@@ -79,7 +79,7 @@ async function main() {
         // await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(err => console.error(err.message));
 
         const status = await page.evaluate((p) => {
-            const notfound = !!document.querySelector("#app > div.body__wrapper > div.body__content > div > div.CardsListSortPager > div.CardListEmpty > h2")?.textContent.includes("ничего не найдено");
+            let notfound = !!document.querySelector("#app > div.body__wrapper > div.body__content > div > div.CardsListSortPager > div.CardListEmpty > h2")?.textContent.includes("ничего не найдено");
             const list = document.querySelectorAll("#app>.body__wrapper>.body__content>div>.CardsListSortPager>.CardsGrid>div");
             if (!list || !list?.length) return { isList: false, notfound };
             if (notfound) return { isList: false, notfound };
@@ -88,58 +88,57 @@ async function main() {
                     el?.querySelector("div>a")?.click();
                     return { isList: true, notfound };
                 }
-                if (el === list[list.length - 1]) return { isList: true, notfound: true };
             }
+            list[0]?.querySelector("div>a")?.click(); // ???
+            // notfound = true;
             return { isList: true, notfound };
         }, p);
 
-        // console.log({ isList });
+        console.log({ isList: status?.isList, notfound: status?.notfound, p });
 
         if (status?.notfound) continue;
 
         if (status?.isList) {
-            await sleep(3);
+            await sleep(6);
         }
 
-        const productCharacteristics = await page.evaluate(() => {
-            const mainInfo = document?.querySelector("#app>.body__wrapper>.body__content>div>section");
-            const charList = document?.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li");
-            const charList2 = document?.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>div:nth-child(2)>div>div");
-            const c = {};
+        if (status?.notfound === false) {
+            const productCharacteristics = await page.evaluate(() => {
+                const mainInfo = document.querySelector("#app>.body__wrapper>.body__content>div>section");
+                const charList = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li");
+                const charList2 = document.querySelectorAll("#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>div:nth-child(2)>div>div");
+                const c = {};
 
-            charList?.forEach((item, i) => {
-                const key = item?.querySelector(`dl>dt`)?.textContent;
-                const value = item?.querySelector(`dl>dd>p`)?.textContent;
-                c[key] = value;
+                charList?.forEach((item, i) => {
+                    const key = item?.querySelector(`dl>dt`)?.textContent;
+                    const value = item?.querySelector(`dl>dd>p`)?.textContent;
+                    c[key] = value;
+                });
+
+                charList2?.forEach((item, i) => {
+                    const key = item?.querySelector(`h3`)?.textContent;
+                    const value = item?.querySelector(`div>.readMore__text>dl>div>dd`)?.textContent;
+                    c[key] = value;
+                });
+
+                const photos = [];
+                photos.push(mainInfo?.querySelector("div>div>div>picture>img")?.getAttribute("src"));
+
+                const photosList = document.querySelectorAll("#app > div.body__wrapper > div.body__content > div > section > div.ViewProductPage__photos > div.ProductPhotos > div.ProductPhotos-buttons > ul > li");
+
+                photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img")?.getAttribute("src")));
+
+                c["Фото"] = photos?.join("; ");
+                c["Наименование"] = document.querySelector("#app > div.body__wrapper > div.body__content > div > h1")?.textContent;
+                c["Цена"] = mainInfo?.querySelector("div:last-child>div>div>.ProductOffer__price>span")?.textContent;
+
+                return c;
             });
 
-            charList2?.forEach((item, i) => {
-                const key = item?.querySelector(`h3`)?.textContent;
-                const value = item?.querySelector(`div>.readMore__text>dl>div>dd`)?.textContent;
-                c[key] = value;
-            });
-
-            const photos = [];
-            photos.push(mainInfo?.querySelector("div>div>div>picture>img")?.getAttribute("src"));
-
-            const photosList = document?.querySelectorAll("#app > div.body__wrapper > div.body__content > div > section > div.ViewProductPage__photos > div.ProductPhotos > div.ProductPhotos-buttons > ul > li");
-
-            photosList.forEach((photo) => photos.push(photo.querySelector("button>picture>img")?.getAttribute("src")));
-
-            c["Фото"] = photos?.join("; ");
-            c["Цена"] = mainInfo?.querySelector("div:last-child>div>div>.ProductOffer__price>span")?.textContent;
-            c["Наименование"] = document?.querySelector("#app > div.body__wrapper > div.body__content > div > h1")?.textContent;
-
-            return c;
-        });
-
-        characteristics[p] = {
-            ...characteristics[p],
-            ...productCharacteristics,
-        };
-        console.log(characteristics);
+            characteristics[p] = productCharacteristics;
+            console.log(characteristics[p]);
+        }
     }
-
     const valuesToAppend = [];
 
     await googleSheets.spreadsheets.values.clear({
@@ -152,7 +151,6 @@ async function main() {
     const firstProduct = productNames[0];
     if (firstProduct) {
         const productProps = characteristics[firstProduct] || {};
-        console.log(productProps);
         Object.keys(productProps).forEach(key => {
             if (!headers.includes(key)) {
                 headers.push(key);
@@ -172,7 +170,7 @@ async function main() {
         valuesToAppend.push(row);
     }
 
-    console.log("Val : ", valuesToAppend);
+    console.log(valuesToAppend);
 
     googleSheets.spreadsheets.values.append({
         auth,
@@ -184,7 +182,7 @@ async function main() {
         },
     });
 
-    await sleep(20);
+    await sleep(10);
     await browser.close();
 }
 
