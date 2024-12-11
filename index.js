@@ -54,6 +54,11 @@ async function main() {
     await page.goto(process.env.TARGET_URL, { waitUntil: "networkidle0", timeout: 61000 });
     await page.setViewport({ width: 1520, height: 1080 });
 
+    // await page.locator("#APjFqb").fill(productNames[0]).catch(err => console.error(err.message));
+    // await page.keyboard.press("Enter").catch(err => console.error(err.message));
+    // await sleep(10);
+    // await page.locator("#rso > div:nth-child(1) > div > div > div > div.kb0PBd.ieodic.jGGQ5e > div > div > span > a").click().catch(err => console.error(err.message));
+    // await sleep(10);
 
     const searchFormSelector = "#app>.body__header>header>div>div:nth-child(3)>div>form";
     const searchInputSelector = searchFormSelector + ">div>div:nth-child(2)>input:nth-child(2)";
@@ -72,10 +77,17 @@ async function main() {
     // const characteristicsListSelector = "#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li:nth-child(3)>dl>dd>p";
 
     for (let p of productNames) {
-        await page.evaluate(input => input.value = "", searchInput);
-        await searchInput.type(p || "Oooops...").catch(err => console.error(err.message));
-        await searchButton.click().catch(err => console.error(err.message));
-        await sleep(3.2);
+        await page.goto("https://www.google.com/", { waitUntil: "networkidle0", timeout: 61000 });
+        await page.locator("#APjFqb").fill(`${p} site:${process.env.TARGET_URL}`).catch(err => console.error(err.message));
+        await page.keyboard.press("Enter").catch(err => console.error(err.message));
+        await sleep(3);
+        await page.locator("#rso > div:nth-child(1) > div > div > div > div.kb0PBd.ieodic.jGGQ5e > div > div > span > a").click().catch(err => console.error(err.message));
+        await sleep(3);
+        // await page.evaluate(input => input.value = "", searchInput);
+        // await searchInput.type(p || "Oooops...").catch(err => console.error(err.message));
+        // await searchButton.click().catch(err => console.error(err.message));
+        // await sleep(3.2);
+
         // await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(err => console.error(err.message));
 
         const status = await page.evaluate((p) => {
