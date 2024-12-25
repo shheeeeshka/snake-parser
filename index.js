@@ -51,7 +51,7 @@ async function main() {
     });
     const page = await browser.newPage();
 
-    await page.goto(process.env.TARGET_URL, { waitUntil: "networkidle0", timeout: 61000 });
+    await page.goto(process.env.TARGET_URL, { waitUntil: "domcontentloaded", timeout: 61000 });
     await page.setViewport({ width: 1520, height: 1080 });
 
     // await page.locator("#APjFqb").fill(productNames[0]).catch(err => console.error(err.message));
@@ -77,12 +77,12 @@ async function main() {
     // const characteristicsListSelector = "#app>.body__wrapper>.body__content>div>div:last-child>div:last-child>div>div>div>div>ul>li:nth-child(3)>dl>dd>p";
 
     for (let p of productNames) {
-        await page.goto("https://www.google.com/", { waitUntil: "networkidle0", timeout: 61000 });
+        await page.goto("https://www.google.com/", { waitUntil: "domcontentloaded", timeout: 61000 });
         await page.locator("#APjFqb").fill(`${p} site:${process.env.TARGET_URL}`).catch(err => console.error(err.message));
         await page.keyboard.press("Enter").catch(err => console.error(err.message));
-        await sleep(3);
-        await page.locator("#rso > div:nth-child(1) > div > div > div > div.kb0PBd.ieodic.jGGQ5e > div > div > span > a").click().catch(err => console.error(err.message));
-        await sleep(3);
+        await sleep(1.5);
+        await page.locator("#rso > div:nth-child(1) > div > div > div > div:first-child > div > div > div > span > a").click().catch(err => console.error(err.message));
+        await sleep(1.5);
         // await page.evaluate(input => input.value = "", searchInput);
         // await searchInput.type(p || "Oooops...").catch(err => console.error(err.message));
         // await searchButton.click().catch(err => console.error(err.message));
